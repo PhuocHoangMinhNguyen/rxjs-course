@@ -1,9 +1,9 @@
-import {Injectable} from '@angular/core';
-import {BehaviorSubject, Observable, Subject, timer} from 'rxjs';
-import {Course} from '../model/course';
-import {delayWhen, filter, map, retryWhen, shareReplay, tap, withLatestFrom} from 'rxjs/operators';
-import {createHttpObservable} from './util';
-import {fromPromise} from 'rxjs/internal-compatibility';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject, Observable, Subject, timer } from 'rxjs';
+import { Course } from '../model/course';
+import { delayWhen, filter, map, retryWhen, shareReplay, tap, withLatestFrom } from 'rxjs/operators';
+import { createHttpObservable } from './util';
+import { fromPromise } from 'rxjs/internal-compatibility';
 
 
 @Injectable({
@@ -22,14 +22,14 @@ export class Store {
 
         const http$ = createHttpObservable('/api/courses');
 
-        http$
-            .pipe(
-                tap(() => console.log('HTTP request executed')),
-                map(res => Object.values(res['payload']))
-            )
-            .subscribe(
-                courses => this.subject.next(courses)
-            );
+        // http$
+        //     .pipe(
+        //         tap(() => console.log('HTTP request executed')),
+        //         map(res => Object.values(res['payload']))
+        //     )
+        //     .subscribe(
+        //         courses => this.subject.next(courses)
+        //     );
     }
 
     selectBeginnerCourses() {
@@ -40,7 +40,7 @@ export class Store {
         return this.filterByCategory('ADVANCED');
     }
 
-    selectCourseById(courseId:number) {
+    selectCourseById(courseId: number) {
         return this.courses$
             .pipe(
                 map(courses => courses.find(course => course.id == courseId)),
@@ -57,7 +57,7 @@ export class Store {
             );
     }
 
-    saveCourse(courseId:number, changes): Observable<any> {
+    saveCourse(courseId: number, changes): Observable<any> {
 
         const courses = this.subject.getValue();
 
