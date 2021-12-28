@@ -17,7 +17,7 @@ import { merge, fromEvent, Observable, concat } from 'rxjs';
 import { Lesson } from '../model/lesson';
 import { createHttpObservable } from '../common/util';
 import { Store } from '../common/store.service';
-
+import { debug, RxJsLoggingLevel, setRxJsLoggingLevel } from '../common/debug';
 
 @Component({
     selector: 'course',
@@ -41,22 +41,25 @@ export class CourseComponent implements OnInit, AfterViewInit {
 
         this.courseId = this.route.snapshot.params['id'];
 
-        this.course$ = createHttpObservable(`api/course/${this.courseId}`) as Observable<Course>;
+        this.course$ = createHttpObservable(`api/courses/${this.courseId}`).pipe(
+            debug(RxJsLoggingLevel.INFO, 'course value')
+        ) as Observable<Course>;
+
+        setRxJsLoggingLevel(RxJsLoggingLevel.TRACE);
 
     }
 
     ngAfterViewInit() {
 
-        const searchLessons$ = fromEvent<any>(this.input.nativeElement, 'keyup').pipe(
+        this.lessons$ = fromEvent<any>(this.input.nativeElement, 'keyup').pipe(
             map(event => event.target.value),
+            startWith(''),
+            debug(RxJsLoggingLevel.TRACE, 'search'),
             debounceTime(400),
             distinctUntilChanged(),
-            switchMap(search => this.loadLessons(search))
+            switchMap(search => this.loadLessons(search)),
+            debug(RxJsLoggingLevel.DEBUG, 'lessons value'),
         );
-
-        const initialLessons$ = this.loadLessons();
-
-        this.lessons$ = concat(initialLessons$, searchLessons$);
 
     }
 
