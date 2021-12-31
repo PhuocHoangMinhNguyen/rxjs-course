@@ -1,35 +1,28 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, timer } from 'rxjs';
-import { Course } from '../model/course';
-import { delayWhen, filter, map, retryWhen, shareReplay, tap, withLatestFrom } from 'rxjs/operators';
-import { createHttpObservable } from './util';
-import { fromPromise } from 'rxjs/internal-compatibility';
-
+import { Injectable } from "@angular/core";
+import { BehaviorSubject, Observable } from "rxjs";
+import { fromPromise } from "rxjs/internal-compatibility";
+import { tap, map, filter } from "rxjs/operators";
+import { Course } from "../model/course";
+import { createHttpObservable } from "./util";
 
 @Injectable({
     providedIn: 'root'
 })
-
-
 export class Store {
 
-    private subject = new BehaviorSubject<Course[]>([]);
+    private subject = new BehaviorSubject<any[]>([]);
 
     courses$: Observable<Course[]> = this.subject.asObservable();
 
-
     init() {
+        const http$ = createHttpObservable('api/courses');
 
-        const http$ = createHttpObservable('/api/courses');
-
-        // http$
-        //     .pipe(
-        //         tap(() => console.log('HTTP request executed')),
-        //         map(res => Object.values(res['payload']))
-        //     )
-        //     .subscribe(
-        //         courses => this.subject.next(courses)
-        //     );
+        http$.pipe(
+            tap(() => console.log('HTTP request executed')),
+            map(res => Object.values(res['payload'])),
+        ).subscribe(
+            courses => this.subject.next(courses)
+        );
     }
 
     selectBeginnerCourses() {
@@ -37,28 +30,23 @@ export class Store {
     }
 
     selectAdvancedCourses() {
-        return this.filterByCategory('ADVANCED');
+        return this.filterByCategory('BEGINNER');
     }
 
     selectCourseById(courseId: number) {
-        return this.courses$
-            .pipe(
-                map(courses => courses.find(course => course.id == courseId)),
-                filter(course => !!course)
-
-            );
+        return this.courses$.pipe(
+            map(courses => courses.find(course => course.id == courseId))
+        );
     }
 
     filterByCategory(category: string) {
-        return this.courses$
-            .pipe(
-                map(courses => courses
-                    .filter(course => course.category == category))
-            );
+        return this.courses$.pipe(
+            map(courses => courses.filter(course => course.category == 'BEGINNER')),
+            filter(course => !!course)
+        );
     }
 
     saveCourse(courseId: number, changes): Observable<any> {
-
         const courses = this.subject.getValue();
 
         const courseIndex = courses.findIndex(course => course.id == courseId);
@@ -68,7 +56,7 @@ export class Store {
         newCourses[courseIndex] = {
             ...courses[courseIndex],
             ...changes
-        };
+        }
 
         this.subject.next(newCourses);
 
@@ -79,39 +67,6 @@ export class Store {
                 'content-type': 'application/json'
             }
         }));
-
     }
 
-
-
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

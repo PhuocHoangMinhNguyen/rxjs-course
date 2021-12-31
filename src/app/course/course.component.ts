@@ -11,9 +11,9 @@ import {
     concatMap,
     switchMap,
     withLatestFrom,
-    concatAll, shareReplay
+    concatAll, shareReplay, first, take
 } from 'rxjs/operators';
-import { merge, fromEvent, Observable, concat } from 'rxjs';
+import { merge, fromEvent, Observable, concat, forkJoin, pipe } from 'rxjs';
 import { Lesson } from '../model/lesson';
 import { createHttpObservable } from '../common/util';
 import { Store } from '../common/store.service';
@@ -26,27 +26,29 @@ import { debug, RxJsLoggingLevel, setRxJsLoggingLevel } from '../common/debug';
 })
 export class CourseComponent implements OnInit, AfterViewInit {
 
-    courseId: string;
+    courseId: number;
     course$: Observable<Course>;
     lessons$: Observable<Lesson[]>;
 
-
     @ViewChild('searchInput') input: ElementRef;
 
-    constructor(private route: ActivatedRoute) {
-
-    }
+    constructor(
+        private route: ActivatedRoute,
+        private store: Store
+    ) { }
 
     ngOnInit() {
 
         this.courseId = this.route.snapshot.params['id'];
 
-        this.course$ = createHttpObservable(`api/courses/${this.courseId}`).pipe(
-            debug(RxJsLoggingLevel.INFO, 'course value')
-        ) as Observable<Course>;
+        this.course$ = this.store.selectCourseById(this.courseId);
 
-        setRxJsLoggingLevel(RxJsLoggingLevel.TRACE);
-
+        this.loadLessons().pipe(
+            withLatestFrom(this.course$)
+        ).subscribe(([lessons, courses]) => {
+            console.log("lessons" + lessons);
+            console.log("course: " + courses);
+        });
     }
 
     ngAfterViewInit() {

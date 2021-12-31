@@ -28,11 +28,22 @@ export class AboutComponent implements OnInit {
 
     ngOnInit() {
 
-        const http$ = createHttpObservable('api/courses');
+        const subject = new ReplaySubject();
 
-        const sub = http$.subscribe(console.log);
+        const series$ = subject.asObservable();
 
-        setTimeout(() => sub.unsubscribe(), 0);
+        series$.subscribe(val => console.log('first sub: ' + val));
+
+        subject.next(1);
+        subject.next(2);
+        subject.next(3);
+
+        // subject.complete();
+
+        setTimeout(() => {
+            series$.subscribe(val => console.log("second sub: " + val));
+            subject.next(4);
+        }, 3000);
 
     }
 
